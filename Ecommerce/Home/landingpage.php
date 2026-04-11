@@ -13,7 +13,9 @@ $mcat_id = isset($_GET['mcat_id']) ? (int)$_GET['mcat_id'] : 0;
 
 // Initialize variables for product pagination
 $itemsPerPage = isset($_GET['limit']) ? (int)$_GET['limit'] : 12;
+$itemsPerPage = max(1, min(100, $itemsPerPage));
 $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$currentPage = max(1, $currentPage);
 $offset = ($currentPage - 1) * $itemsPerPage;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'latest';
 
@@ -104,27 +106,19 @@ if ($sort === 'price-low') {
     $order_by = "p.p_name DESC";
 }
 
-// Get products
 $product_query = "SELECT p.*, e.ecat_name 
                   FROM tbl_product p 
                   LEFT JOIN tbl_end_category e ON p.ecat_id = e.ecat_id 
                   $product_condition 
                   ORDER BY $order_by 
-                  LIMIT ?, ?";
-$stmt = mysqli_prepare($db, $product_query);
+                  LIMIT $offset, $itemsPerPage";
+$product_stmt = mysqli_prepare($db, $product_query);
 if ($ecat_id > 0 || $mcat_id > 0) {
-    $offset_param = $offset;  // Store offset in a variable
-    $limit_param = $itemsPerPage;  // Store limit in a variable
-    mysqli_stmt_bind_param($stmt, "iii", $category_param, $offset_param, $limit_param);
-} else {
-    $offset_param = $offset;  // Store offset in a variable
-    $limit_param = $itemsPerPage;  // Store limit in a variable
-    mysqli_stmt_bind_param($stmt, "ii", $offset_param, $limit_param);
+    mysqli_stmt_bind_param($product_stmt, "i", $category_param);
 }
-mysqli_stmt_execute($stmt);
-$product_result = mysqli_stmt_get_result($stmt);
+mysqli_stmt_execute($product_stmt);
+$product_result = mysqli_stmt_get_result($product_stmt);
 
-// Fetch top categories for navigation
 $tcat_query = "SELECT * FROM tbl_top_category WHERE show_on_menu = 1 ORDER BY tcat_name";
 $tcat_result = mysqli_query($db, $tcat_query);
 $top_categories = [];
@@ -132,21 +126,24 @@ $top_categories = [];
 while ($tcat = mysqli_fetch_assoc($tcat_result)) {
     $tcat_id = $tcat['tcat_id'];
     $mcat_query = "SELECT * FROM tbl_mid_category WHERE tcat_id = ? ORDER BY mcat_name";
-    $stmt = mysqli_prepare($db, $mcat_query);
-    mysqli_stmt_bind_param($stmt, "i", $tcat_id);
-    mysqli_stmt_execute($stmt);
-    $mcat_result = mysqli_stmt_get_result($stmt);
-    
+    $mcat_stmt = mysqli_prepare($db, $mcat_query);
+    mysqli_stmt_bind_param($mcat_stmt, "i", $tcat_id);
+    mysqli_stmt_execute($mcat_stmt);
+    $mcat_result = mysqli_stmt_get_result($mcat_stmt);
+
     $mid_categories = [];
     while ($mcat = mysqli_fetch_assoc($mcat_result)) {
         $mid_categories[] = $mcat;
     }
-    
+    mysqli_free_result($mcat_result);
+    mysqli_stmt_close($mcat_stmt);
+
     $top_categories[] = [
         'tcat' => $tcat,
         'mcats' => $mid_categories
     ];
 }
+mysqli_free_result($tcat_result);
 
 include_once __DIR__ . "/../user/includes/header.php";
 ?>
