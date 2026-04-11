@@ -1,13 +1,13 @@
 <?php
-// Start output buffering
+
 ob_start();
 
-// Start session only if not already started
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Error reporting
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -16,7 +16,7 @@ date_default_timezone_set('Asia/Kolkata');
 
 // Database configuration
 class Database {
-    private $host = 'localhost';
+    private $host = '127.0.0.1';
     private $username = 'root';
     private $database = 'santoshvastralay';
     private $password = '';

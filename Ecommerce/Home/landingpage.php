@@ -1,13 +1,8 @@
 <?php
 require_once __DIR__ . "/../db.php";
 
-// Set the page title
 $title = "Products - Santosh Vastralay";
 
-// Include the header (assumes $db is defined here)
-include_once __DIR__ . "/../user/includes/header.php";
-
-// Check database connection
 if (!isset($db) || !$db) {
     die("Database connection failed: " . mysqli_connect_error());
 }
@@ -93,6 +88,7 @@ if ($ecat_id > 0 || $mcat_id > 0) {
 mysqli_stmt_execute($stmt);
 $count_result = mysqli_stmt_get_result($stmt);
 $total_products = mysqli_fetch_assoc($count_result)['total'];
+mysqli_free_result($count_result);
 $total_pages = ceil($total_products / $itemsPerPage);
 mysqli_stmt_close($stmt);
 
@@ -151,6 +147,8 @@ while ($tcat = mysqli_fetch_assoc($tcat_result)) {
         'mcats' => $mid_categories
     ];
 }
+
+include_once __DIR__ . "/../user/includes/header.php";
 ?>
 
 <!-- Navigation Bar -->

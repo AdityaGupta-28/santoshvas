@@ -1,6 +1,6 @@
 <?php
 // Database configuration
-$host = "localhost"; // Change this if your MySQL server is on a different host
+$host = "127.0.0.1";
 $username = "root";  // Change to your database username
 $password = "";      // Change to your database password
 $database = "santoshvastralay";
