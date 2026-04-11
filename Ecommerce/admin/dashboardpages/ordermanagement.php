@@ -1,6 +1,8 @@
 <?php include_once '../includes/header.php'?>
 <?php
 
+require_once __DIR__ . '/../../includes/mail_send.php';
+
 // Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -88,16 +90,9 @@ if(isset($_POST['form1'])) {
                 '.$order_detail.'
                 </body></html>';
 
-            // Email headers
-            $headers = "From: Santosh Vastralay <santoshvastraly@gmail.com>\r\n";
-            $headers .= "Reply-To: santoshvastraly@gmail.com\r\n";
-            $headers .= "MIME-Version: 1.0\r\n";
-            $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-            $headers .= "X-Mailer: PHP/" . phpversion();
+            $mailErr = '';
+            $mail_sent = send_html_mail($cust_email, $subject_text, $message_body, $mailErr);
 
-            // Send email using PHP mail()
-            $mail_sent = mail($cust_email, $subject_text, $message_body, $headers);
-            
             if ($mail_sent) {
                 // Insert into database
                 $query = "INSERT INTO tbl_customer_message (subject, message, order_detail, cust_id) VALUES (
@@ -115,7 +110,7 @@ if(isset($_POST['form1'])) {
                     $error_message = "Database error: " . mysqli_error($db);
                 }
             } else {
-                $error_message = "Failed to send email. Please try again.";
+                $error_message = 'Failed to send email: ' . htmlspecialchars($mailErr);
             }
         }
     }
@@ -264,18 +259,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_email'])) {
         </div>
     </div>";
     
-    // Email headers
-    $headers = "From: Santosh Vastralay <santoshvastraly@gmail.com>\r\n";
-    $headers .= "Reply-To: santoshvastraly@gmail.com\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
-
-    // Send email using PHP mail()
-    if(mail($customer_email, $subject, $htmlMessage, $headers)) {
+    $mailErr = '';
+    if (send_html_mail($customer_email, $subject, $htmlMessage, $mailErr)) {
         $_SESSION['success_msg'] = "Email sent successfully to customer!";
     } else {
-        $_SESSION['error_msg'] = "Failed to send email. Please try again.";
+        $_SESSION['error_msg'] = 'Failed to send email: ' . htmlspecialchars($mailErr);
     }
     
     header("Location: ordermanagement.php");

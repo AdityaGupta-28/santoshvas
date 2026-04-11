@@ -1,6 +1,8 @@
 
 
 <?php
+require_once __DIR__ . '/../includes/mail_send.php';
+
 // Initialize variables
 $name = $email = $phone = $subject = $message = '';
 $errors = [];
@@ -62,13 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 $subject_line .= "General Inquiry";
         }
         
-        // Email headers
-        $headers = "From: $name <$email>" . "\r\n";
-        $headers .= "Reply-To: $email" . "\r\n";
-        $headers .= "MIME-Version: 1.0" . "\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8" . "\r\n";
-        $headers .= "X-Mailer: PHP/" . phpversion();
-        
         // Email body
         $email_body = "
         <html>
@@ -109,19 +104,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         </html>
         ";
         
-        // Send email
-        try {
-            $mail_sent = mail($to, $subject_line, $email_body, $headers);
-            
-            if ($mail_sent) {
-                $success_message = "Thank you for contacting us. We will get back to you soon!";
-                // Clear form fields after successful submission
-                $name = $email = $phone = $subject = $message = '';
-            } else {
-                $error_message = "Sorry, there was an error sending your message. Please try again later.";
-            }
-        } catch (Exception $e) {
-            $error_message = "Mailer Error: " . $e->getMessage();
+        $mailErr = '';
+        $mail_sent = send_html_mail($to, $subject_line, $email_body, $mailErr, ['email' => $email, 'name' => $name]);
+
+        if ($mail_sent) {
+            $success_message = "Thank you for contacting us. We will get back to you soon!";
+            $name = $email = $phone = $subject = $message = '';
+        } else {
+            $error_message = 'Sorry, the message could not be sent. ' . htmlspecialchars($mailErr);
         }
     }
 }
