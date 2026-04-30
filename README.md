@@ -1,0 +1,4 @@
+Santosh Vastralay is a fully dynamic e-commerce website developed for online product selling. It was initially designed for a textile store, allowing customers to browse products, explore categories, and shop through a simple and responsive interface.
+The project includes an admin panel that allows the owner to manage products, categories, prices, images, and website content without changing the code. Since the website is fully dynamic, it can also be converted into other business websites like grocery or electronics stores by updating data through the admin panel.
+My Role: I independently designed and developed the complete project, including the frontend, backend, database, admin panel, and dynamic website functionality.
+Outcome Obtained: The project resulted in a flexible and reusable e-commerce platform that simplifies store management, improves customer experience, and can be adapted for different types of businesses with minimal changes.
