@@ -14,6 +14,15 @@ $user_id = $_SESSION['user_id'];
 $orders = [];
 
 try {
+    // Backward-compatible check for payment_status column
+    $hasPaymentStatus = false;
+    $colStmt = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='tbl_orders' AND COLUMN_NAME='payment_status' LIMIT 1");
+    if ($colStmt) {
+        $colStmt->execute();
+        $hasPaymentStatus = $colStmt->get_result()->num_rows > 0;
+        $colStmt->close();
+    }
+
     // Prepare the query
     $stmt = $db->prepare("
         SELECT o.*, 
@@ -73,6 +82,9 @@ try {
                         <th class="py-3 px-4 text-left">Date</th>
                         <th class="py-3 px-4 text-left">Items</th>
                         <th class="py-3 px-4 text-right">Total</th>
+                        <?php if (!empty($hasPaymentStatus)): ?>
+                            <th class="py-3 px-4 text-left">Payment</th>
+                        <?php endif; ?>
                         <th class="py-3 px-4 text-left">Status</th>
                         <th class="py-3 px-4 text-center">Action</th>
                     </tr>
@@ -84,6 +96,19 @@ try {
                             <td class="py-4 px-4"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
                             <td class="py-4 px-4"><?php echo $order['item_count']; ?> items</td>
                             <td class="py-4 px-4 text-right">₹<?php echo number_format($order['total_amount'], 2); ?></td>
+                            <?php if (!empty($hasPaymentStatus)): ?>
+                                <?php
+                                    $ps = $order['payment_status'] ?? 'unpaid';
+                                    $pClass = 'bg-yellow-100 text-yellow-800';
+                                    if ($ps === 'paid') $pClass = 'bg-green-100 text-green-800';
+                                    if ($ps === 'refunded') $pClass = 'bg-gray-200 text-gray-800';
+                                ?>
+                                <td class="py-4 px-4">
+                                    <span class="px-2 py-1 rounded-full text-sm <?php echo $pClass; ?>">
+                                        <?php echo strtoupper($ps); ?>
+                                    </span>
+                                </td>
+                            <?php endif; ?>
                             <td class="py-4 px-4">
                                 <span class="px-2 py-1 rounded-full text-sm 
                                     <?php 

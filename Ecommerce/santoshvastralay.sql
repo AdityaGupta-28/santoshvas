@@ -168,6 +168,12 @@ CREATE TABLE `tbl_orders` (
   `user_id` int(11) NOT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `status` enum('pending','processing','completed','cancelled') DEFAULT 'pending',
+  `payment_status` enum('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid',
+  `payment_method` varchar(30) DEFAULT NULL,
+  `payment_txn_id` varchar(100) DEFAULT NULL,
+  `paid_amount` decimal(10,2) DEFAULT NULL,
+  `paid_at` timestamp NULL DEFAULT NULL,
+  `payment_notes` text DEFAULT NULL,
   `shipping_address` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -177,9 +183,9 @@ CREATE TABLE `tbl_orders` (
 -- Dumping data for table `tbl_orders`
 --
 
-INSERT INTO `tbl_orders` (`id`, `user_id`, `total_amount`, `status`, `shipping_address`, `created_at`, `updated_at`) VALUES
-(1, 2, 1399.00, 'processing', 'Bishunpura, gopalganj, Bihar (841407)', '2025-04-17 19:40:57', '2025-04-18 03:38:14'),
-(2, 1, 2999.00, 'pending', 'Patna', '2025-04-18 05:15:46', '2025-04-18 05:15:46');
+INSERT INTO `tbl_orders` (`id`, `user_id`, `total_amount`, `status`, `payment_status`, `payment_method`, `payment_txn_id`, `paid_amount`, `paid_at`, `payment_notes`, `shipping_address`, `created_at`, `updated_at`) VALUES
+(1, 2, 1399.00, 'processing', 'unpaid', NULL, NULL, NULL, NULL, NULL, 'Bishunpura, gopalganj, Bihar (841407)', '2025-04-17 19:40:57', '2025-04-18 03:38:14'),
+(2, 1, 2999.00, 'pending', 'unpaid', NULL, NULL, NULL, NULL, NULL, 'Patna', '2025-04-18 05:15:46', '2025-04-18 05:15:46');
 
 -- --------------------------------------------------------
 
