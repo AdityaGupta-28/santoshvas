@@ -136,9 +136,21 @@ try {
                         <?php if (!empty($order['paid_at'])): ?>
                             <p class="text-sm text-gray-600">Paid at: <?php echo date('M d, Y H:i', strtotime($order['paid_at'])); ?></p>
                         <?php endif; ?>
+                        <?php if (!empty($order['payment_notes'])): ?>
+                            <p class="text-sm text-gray-600">Notes: <?php echo nl2br(htmlspecialchars($order['payment_notes'])); ?></p>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>
+
+                <?php if (!empty($hasPaymentColumns) && $order['status'] !== 'cancelled' && ($order['payment_status'] ?? 'unpaid') !== 'paid'): ?>
+                    <div class="mt-4 pt-4 border-t">
+                        <a href="<?php echo htmlspecialchars(getAbsoluteUrl('Home/payment.php?order_id=' . $order_id)); ?>"
+                           class="inline-block bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded">
+                            Complete Payment
+                        </a>
+                    </div>
+                <?php endif; ?>
                 
                 <h3 class="font-bold text-gray-700 mb-2">Shipping Address</h3>
                 <p class="text-gray-600"><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>

@@ -137,9 +137,15 @@ try {
                             </td>
                             <td class="py-4 px-4 text-center">
                                 <a href="order-details.php?id=<?php echo $order['id']; ?>" 
-                                   class="text-blue-500 hover:text-blue-700">
+                                   class="text-blue-500 hover:text-blue-700 mr-3">
                                     <i class="fas fa-eye"></i> View Details
                                 </a>
+                                <?php if (!empty($hasPaymentStatus) && ($order['payment_status'] ?? 'unpaid') !== 'paid' && $order['status'] !== 'cancelled'): ?>
+                                    <a href="<?php echo htmlspecialchars(getAbsoluteUrl('Home/payment.php?order_id=' . $order['id'])); ?>"
+                                       class="text-green-600 hover:text-green-700">
+                                        <i class="fas fa-credit-card"></i> Pay Now
+                                    </a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -4,6 +4,10 @@ require_once __DIR__ . "/../db.php";
 // Include header
 include_once __DIR__ . "/../user/includes/header.php";
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['user_id'])) {
     redirectWithMessage('user/login.php', 'Please login to continue payment', 'error');
 }
@@ -46,8 +50,18 @@ if ($order['status'] === 'cancelled') {
     redirectWithMessage('user/order-details.php?id=' . $order_id, 'This order is cancelled and cannot be paid.', 'error');
 }
 
+if (($order['payment_status'] ?? 'unpaid') === 'paid') {
+    redirectWithMessage('user/order-details.php?id=' . $order_id, 'This order is already paid.', 'success');
+}
+
 // Handle payment submission (simulated/manual)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_now'])) {
+    if (
+        !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
+        !hash_equals($_SESSION['csrf_token'], (string)$_POST['csrf_token'])
+    ) {
+        $error_message = "Invalid request token. Please refresh and try again.";
+    } else {
     $method = strtoupper(trim($_POST['payment_method'] ?? ''));
     $allowedMethods = ['COD', 'UPI', 'CARD', 'NETBANKING', 'WALLET', 'BANK_TRANSFER'];
     if (!in_array($method, $allowedMethods, true)) {
@@ -73,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_now'])) {
             $amount = floatval($order['total_amount']);
             $paidAt = date('Y-m-d H:i:s');
 
-            $stmt = $db->prepare("UPDATE tbl_orders SET payment_method = ?, payment_status = 'paid', payment_txn_id = ?, paid_amount = ?, paid_at = ?, payment_notes = ?, updated_at = NOW() WHERE id = ? AND user_id = ?");
+            $stmt = $db->prepare("UPDATE tbl_orders SET payment_method = ?, payment_status = 'paid', payment_txn_id = ?, paid_amount = ?, paid_at = ?, payment_notes = ?, status = CASE WHEN status = 'pending' THEN 'processing' ELSE status END, updated_at = NOW() WHERE id = ? AND user_id = ?");
             $stmt->bind_param("ssdssii", $method, $txn, $amount, $paidAt, $notes, $order_id, $_SESSION['user_id']);
             $stmt->execute();
             $stmt->close();
@@ -81,6 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_now'])) {
             redirectWithMessage('user/order-details.php?id=' . $order_id, 'Payment successful!', 'success');
         }
     }
+    }
+}
+
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 ?>
 
@@ -98,7 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_now'])) {
         <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-bold mb-4">Choose payment method</h2>
 
-            <form method="post" class="space-y-4">
+            <form method="post" class="space-y-4" id="paymentForm">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label class="border rounded-lg p-4 cursor-pointer hover:border-blue-500 flex items-start gap-3">
                         <input type="radio" name="payment_method" value="COD" class="mt-1" checked>
@@ -195,6 +215,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pay_now'])) {
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('paymentForm');
+    if (!form) {
+        return;
+    }
+
+    const methodInputs = form.querySelectorAll('input[name="payment_method"]');
+    const txnField = document.getElementById('payment_txn_id');
+
+    function updateTxnFieldState() {
+        const selected = form.querySelector('input[name="payment_method"]:checked');
+        const method = selected ? selected.value : 'COD';
+        const isOnlineMethod = method !== 'COD';
+        txnField.required = isOnlineMethod;
+        txnField.disabled = !isOnlineMethod;
+        if (!isOnlineMethod) {
+            txnField.value = '';
+        }
+    }
+
+    methodInputs.forEach(function (input) {
+        input.addEventListener('change', updateTxnFieldState);
+    });
+
+    updateTxnFieldState();
+});
+</script>
 
 <?php include_once __DIR__ . "/../user/includes/footer.php"; ?>
 

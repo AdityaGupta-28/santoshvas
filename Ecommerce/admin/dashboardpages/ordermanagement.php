@@ -302,6 +302,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_payment'])) {
         exit();
     }
 
+    if ($payment_status === 'paid') {
+        if ($payment_method === '') {
+            $_SESSION['error_msg'] = "Payment method is required when marking as paid.";
+            header("Location: ordermanagement.php");
+            exit();
+        }
+        if ($paid_amount === '' || !is_numeric($paid_amount) || floatval($paid_amount) < 0) {
+            $_SESSION['error_msg'] = "Valid paid amount is required when marking as paid.";
+            header("Location: ordermanagement.php");
+            exit();
+        }
+    }
+
     // Normalize to NULLs where appropriate
     $payment_method = $payment_method !== '' ? $payment_method : null;
     $payment_txn_id = $payment_txn_id !== '' ? $payment_txn_id : null;
@@ -321,6 +334,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_payment'])) {
     if ($paid_at !== '') {
         // Expect HTML datetime-local "YYYY-MM-DDTHH:MM"
         $paid_at_val = str_replace('T', ' ', $paid_at) . ':00';
+    }
+
+    if ($payment_status === 'unpaid') {
+        $paid_amount_val = null;
+        $paid_at_val = null;
+        $payment_txn_id = null;
     }
 
     $stmt = $db->prepare("
@@ -402,7 +421,8 @@ $hasOrderPaymentColumns =
     columnExists($db, 'tbl_orders', 'payment_method') &&
     columnExists($db, 'tbl_orders', 'payment_txn_id') &&
     columnExists($db, 'tbl_orders', 'paid_amount') &&
-    columnExists($db, 'tbl_orders', 'paid_at');
+    columnExists($db, 'tbl_orders', 'paid_at') &&
+    columnExists($db, 'tbl_orders', 'payment_notes');
 
 if ($hasOrderPaymentColumns) {
     $selectPaymentColumns = ",
@@ -410,7 +430,8 @@ if ($hasOrderPaymentColumns) {
         o.payment_method,
         o.payment_txn_id,
         o.paid_amount,
-        o.paid_at
+        o.paid_at,
+        o.payment_notes
     ";
 }
 
@@ -594,7 +615,8 @@ $orders = $db->query($query);
                                             '<?php echo htmlspecialchars($order['payment_method'] ?? '', ENT_QUOTES); ?>',
                                             '<?php echo htmlspecialchars($order['payment_txn_id'] ?? '', ENT_QUOTES); ?>',
                                             '<?php echo htmlspecialchars($order['paid_amount'] ?? '', ENT_QUOTES); ?>',
-                                            '<?php echo !empty($order['paid_at']) ? date('Y-m-d\TH:i', strtotime($order['paid_at'])) : ''; ?>'
+                                            '<?php echo !empty($order['paid_at']) ? date('Y-m-d\TH:i', strtotime($order['paid_at'])) : ''; ?>',
+                                            '<?php echo htmlspecialchars($order['payment_notes'] ?? '', ENT_QUOTES); ?>'
                                         )"
                                     <?php else: ?>
                                         onclick="alert('Payment system not configured in DB. Please run the updated SQL to add payment columns to tbl_orders.')"
@@ -861,7 +883,7 @@ function openEmailModal(orderId, customerEmail, orderStatus, customerName, total
     }
 }
 
-function openPaymentModal(orderId, paymentStatus, paymentMethod, paymentTxnId, paidAmount, paidAt) {
+function openPaymentModal(orderId, paymentStatus, paymentMethod, paymentTxnId, paidAmount, paidAt, paymentNotes) {
     currentPaymentData = { orderId };
     const modal = document.getElementById('paymentModal');
     if (!modal) return;
@@ -873,7 +895,7 @@ function openPaymentModal(orderId, paymentStatus, paymentMethod, paymentTxnId, p
     document.getElementById('payment_txn_id').value = paymentTxnId || '';
     document.getElementById('paid_amount').value = paidAmount || '';
     document.getElementById('paid_at').value = paidAt || '';
-    document.getElementById('payment_notes').value = '';
+    document.getElementById('payment_notes').value = paymentNotes || '';
 }
 
 function closePaymentModal() {
