@@ -5,6 +5,7 @@ Ecommerce/vendor/
 Ecommerce/config/mail.php
 Ecommerce/Login_details
 
+.Ecommerce.zip
 # Environment
 .env
 .env.*
