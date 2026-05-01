@@ -4,6 +4,16 @@ require_once __DIR__ . "/../db.php";
 // Include header
 include_once __DIR__ . "/../user/includes/header.php";
 
+// Backward-compatible check for payment columns in tbl_orders
+$hasPaymentColumns = false;
+$colStmt = $db->prepare("SELECT COUNT(*) as c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='tbl_orders' AND COLUMN_NAME IN ('payment_status','payment_method','payment_txn_id','paid_amount','paid_at','payment_notes')");
+if ($colStmt) {
+    $colStmt->execute();
+    $cRow = $colStmt->get_result()->fetch_assoc();
+    $hasPaymentColumns = isset($cRow['c']) && intval($cRow['c']) === 6;
+    $colStmt->close();
+}
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     redirectWithMessage('user/login.php', 'Please login to checkout', 'error');
@@ -98,8 +108,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Clear cart
         $_SESSION['cart'] = [];
         
-        // Redirect to order confirmation
-        redirectWithMessage('user/order-details.php?id=' . $order_id, 'Order placed successfully!', 'success');
+        // Redirect to payment step (or fallback if DB not upgraded yet)
+        if ($hasPaymentColumns) {
+            redirectWithMessage('Home/payment.php?order_id=' . $order_id, 'Order placed! Please complete payment.', 'success');
+        } else {
+            redirectWithMessage('user/order-details.php?id=' . $order_id, 'Order placed successfully! (Payment setup pending in DB)', 'success');
+        }
         
     } catch (Exception $e) {
         // Rollback transaction
@@ -130,7 +144,7 @@ $cart_total = getCartTotal();
                     <?php foreach ($_SESSION['cart'] as $item): ?>
                         <div class="flex items-center justify-between">
                             <div class="flex items-center">
-                                <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?php echo htmlspecialchars($item['photo']); ?>" 
+                                <img src="<?php echo BASE_URL; ?>admin/uploadimgs/<?php echo htmlspecialchars($item['photo']); ?>" 
                                      alt="<?php echo htmlspecialchars($item['name']); ?>" 
                                      class="w-16 h-16 object-cover rounded mr-4">
                                 <div>

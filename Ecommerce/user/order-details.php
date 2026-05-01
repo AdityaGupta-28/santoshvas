@@ -17,6 +17,16 @@ if (!$order_id) {
 
 // Get order details
 try {
+    // Backward-compatible check for payment columns
+    $hasPaymentColumns = false;
+    $colStmt = $db->prepare("SELECT COUNT(*) as c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='tbl_orders' AND COLUMN_NAME IN ('payment_status','payment_method','payment_txn_id','paid_amount','paid_at')");
+    if ($colStmt) {
+        $colStmt->execute();
+        $cRow = $colStmt->get_result()->fetch_assoc();
+        $hasPaymentColumns = isset($cRow['c']) && intval($cRow['c']) === 5;
+        $colStmt->close();
+    }
+
     // Get order information
     $stmt = $db->prepare("
         SELECT o.*, u.name, u.email, u.phone 
@@ -101,6 +111,33 @@ try {
                         <h3 class="font-bold text-gray-700">Total Amount</h3>
                         <p class="text-xl font-bold">₹<?php echo number_format($order['total_amount'], 2); ?></p>
                     </div>
+
+                    <?php if (!empty($hasPaymentColumns)): ?>
+                    <div>
+                        <h3 class="font-bold text-gray-700">Payment Status</h3>
+                        <?php
+                            $ps = $order['payment_status'] ?? 'unpaid';
+                            $pClass = 'bg-yellow-100 text-yellow-800';
+                            if ($ps === 'paid') $pClass = 'bg-green-100 text-green-800';
+                            if ($ps === 'refunded') $pClass = 'bg-gray-200 text-gray-800';
+                        ?>
+                        <span class="px-2 py-1 rounded-full text-sm <?php echo $pClass; ?>">
+                            <?php echo strtoupper($ps); ?>
+                        </span>
+                        <?php if (!empty($order['payment_method'])): ?>
+                            <p class="text-sm text-gray-600 mt-1">Method: <?php echo htmlspecialchars($order['payment_method']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($order['payment_txn_id'])): ?>
+                            <p class="text-sm text-gray-600">Txn: <?php echo htmlspecialchars($order['payment_txn_id']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($order['paid_amount'])): ?>
+                            <p class="text-sm text-gray-600">Paid: ₹<?php echo number_format((float)$order['paid_amount'], 2); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($order['paid_at'])): ?>
+                            <p class="text-sm text-gray-600">Paid at: <?php echo date('M d, Y H:i', strtotime($order['paid_at'])); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 
                 <h3 class="font-bold text-gray-700 mb-2">Shipping Address</h3>
@@ -114,7 +151,7 @@ try {
                     <?php foreach ($items as $item): ?>
                         <div class="flex items-center justify-between border-b pb-4">
                             <div class="flex items-center">
-                                <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?php echo htmlspecialchars($item['p_featured_photo']); ?>" 
+                                <img src="<?php echo BASE_URL; ?>admin/uploadimgs/<?php echo htmlspecialchars($item['p_featured_photo']); ?>" 
                                      alt="<?php echo htmlspecialchars($item['p_name']); ?>" 
                                      class="w-16 h-16 object-cover rounded mr-4">
                                 <div>

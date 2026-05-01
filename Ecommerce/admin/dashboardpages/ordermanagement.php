@@ -12,6 +12,31 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// --- Helpers (backward-compatible schema checks) ---
+function columnExists(mysqli $db, string $table, string $column): bool {
+    $sql = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
+    $stmt = $db->prepare($sql);
+    if (!$stmt) return false;
+    $stmt->bind_param("ss", $table, $column);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $exists = $res && $res->num_rows > 0;
+    $stmt->close();
+    return $exists;
+}
+
+function tableExists(mysqli $db, string $table): bool {
+    $sql = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1";
+    $stmt = $db->prepare($sql);
+    if (!$stmt) return false;
+    $stmt->bind_param("s", $table);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $exists = $res && $res->num_rows > 0;
+    $stmt->close();
+    return $exists;
+}
+
 // Initialize message variables
 $error_message = '';
 $success_message = '';
@@ -117,7 +142,7 @@ if(isset($_POST['form1'])) {
 }
 
 // Handle payment status toggle
-if(isset($_GET['payment_id']) && isset($_GET['payment_task'])) {
+if(isset($_GET['payment_id']) && isset($_GET['payment_task']) && tableExists($db, 'tbl_payment')) {
     $payment_id = intval($_GET['payment_id']);
     $new_status = $_GET['payment_task'];
     
@@ -140,7 +165,7 @@ if(isset($_GET['payment_id']) && isset($_GET['payment_task'])) {
 }
 
 // Handle shipping status toggle
-if(isset($_GET['shipping_id']) && isset($_GET['shipping_task'])) {
+if(isset($_GET['shipping_id']) && isset($_GET['shipping_task']) && tableExists($db, 'tbl_payment')) {
     $shipping_id = intval($_GET['shipping_id']);
     $new_status = $_GET['shipping_task'];
     
@@ -163,7 +188,7 @@ if(isset($_GET['shipping_id']) && isset($_GET['shipping_task'])) {
 }
 
 // Handle deletion of orders
-if(isset($_GET['delete_id']) && isset($_SESSION['csrf_token']) && isset($_GET['token'])) {
+if(isset($_GET['delete_id']) && isset($_SESSION['csrf_token']) && isset($_GET['token']) && tableExists($db, 'tbl_payment') && tableExists($db, 'tbl_order')) {
     if($_SESSION['csrf_token'] === $_GET['token']) {
         $id = intval($_GET['delete_id']);
         
@@ -238,6 +263,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     exit();
 }
 
+// Handle payment update (new order system: tbl_orders)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_payment'])) {
+    $order_id = intval($_POST['order_id'] ?? 0);
+
+    if ($order_id <= 0) {
+        $_SESSION['error_msg'] = "Invalid order id!";
+        header("Location: ordermanagement.php");
+        exit();
+    }
+
+    // Only proceed if schema supports it (prevents fatal SQL errors on older DBs)
+    $hasPaymentColumns =
+        columnExists($db, 'tbl_orders', 'payment_status') &&
+        columnExists($db, 'tbl_orders', 'payment_method') &&
+        columnExists($db, 'tbl_orders', 'payment_txn_id') &&
+        columnExists($db, 'tbl_orders', 'paid_amount') &&
+        columnExists($db, 'tbl_orders', 'paid_at') &&
+        columnExists($db, 'tbl_orders', 'payment_notes');
+
+    if (!$hasPaymentColumns) {
+        $_SESSION['error_msg'] = "Payment fields are not available in DB yet. Please run the updated SQL (add payment columns to tbl_orders).";
+        header("Location: ordermanagement.php");
+        exit();
+    }
+
+    $payment_status = $_POST['payment_status'] ?? 'unpaid';
+    $payment_method = trim($_POST['payment_method'] ?? '');
+    $payment_txn_id = trim($_POST['payment_txn_id'] ?? '');
+    $paid_amount = $_POST['paid_amount'] ?? '';
+    $paid_at = trim($_POST['paid_at'] ?? '');
+    $payment_notes = trim($_POST['payment_notes'] ?? '');
+
+    $allowedStatuses = ['unpaid', 'paid', 'refunded'];
+    if (!in_array($payment_status, $allowedStatuses, true)) {
+        $_SESSION['error_msg'] = "Invalid payment status!";
+        header("Location: ordermanagement.php");
+        exit();
+    }
+
+    // Normalize to NULLs where appropriate
+    $payment_method = $payment_method !== '' ? $payment_method : null;
+    $payment_txn_id = $payment_txn_id !== '' ? $payment_txn_id : null;
+    $payment_notes = $payment_notes !== '' ? $payment_notes : null;
+
+    $paid_amount_val = null;
+    if ($paid_amount !== '' && $paid_amount !== null) {
+        if (!is_numeric($paid_amount) || floatval($paid_amount) < 0) {
+            $_SESSION['error_msg'] = "Invalid paid amount!";
+            header("Location: ordermanagement.php");
+            exit();
+        }
+        $paid_amount_val = floatval($paid_amount);
+    }
+
+    $paid_at_val = null;
+    if ($paid_at !== '') {
+        // Expect HTML datetime-local "YYYY-MM-DDTHH:MM"
+        $paid_at_val = str_replace('T', ' ', $paid_at) . ':00';
+    }
+
+    $stmt = $db->prepare("
+        UPDATE tbl_orders
+        SET payment_status = ?,
+            payment_method = ?,
+            payment_txn_id = ?,
+            paid_amount = ?,
+            paid_at = ?,
+            payment_notes = ?,
+            updated_at = NOW()
+        WHERE id = ?
+    ");
+
+    if (!$stmt) {
+        $_SESSION['error_msg'] = "Error preparing payment update!";
+        header("Location: ordermanagement.php");
+        exit();
+    }
+
+    $stmt->bind_param(
+        "sssdssi",
+        $payment_status,
+        $payment_method,
+        $payment_txn_id,
+        $paid_amount_val,
+        $paid_at_val,
+        $payment_notes,
+        $order_id
+    );
+
+    if ($stmt->execute()) {
+        $_SESSION['success_msg'] = "Payment updated successfully!";
+    } else {
+        $_SESSION['error_msg'] = "Error updating payment!";
+    }
+    $stmt->close();
+
+    header("Location: ordermanagement.php");
+    exit();
+}
+
 // Handle email sending
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_email'])) {
     $order_id = $_POST['order_id'];
@@ -271,13 +396,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_email'])) {
 }
 
 // Get all orders with customer details and order items
+$selectPaymentColumns = "";
+$hasOrderPaymentColumns =
+    columnExists($db, 'tbl_orders', 'payment_status') &&
+    columnExists($db, 'tbl_orders', 'payment_method') &&
+    columnExists($db, 'tbl_orders', 'payment_txn_id') &&
+    columnExists($db, 'tbl_orders', 'paid_amount') &&
+    columnExists($db, 'tbl_orders', 'paid_at');
+
+if ($hasOrderPaymentColumns) {
+    $selectPaymentColumns = ",
+        o.payment_status,
+        o.payment_method,
+        o.payment_txn_id,
+        o.paid_amount,
+        o.paid_at
+    ";
+}
+
 $query = "
     SELECT 
         o.id,
         o.user_id,
         o.total_amount,
         o.status,
-        o.shipping_address,
+        o.shipping_address
+        {$selectPaymentColumns},
         o.created_at,
         o.updated_at,
         u.name as customer_name,
@@ -324,6 +468,7 @@ $orders = $db->query($query);
 
                         <th class="px-6 py-3 text-left  font-medium text-gray-900 uppercase tracking-wider">Order Items</th> 
                         <th class="px-6 py-3 text-left  font-medium text-gray-900 uppercase tracking-wider">Total Amount</th>
+                    <th class="px-6 py-3 text-left  font-medium text-gray-900 uppercase tracking-wider">Payment</th>
                         <th class="px-1 py-3 text-left  font-medium text-gray-900 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left  font-medium text-gray-900 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left  font-medium text-gray-900 uppercase tracking-wider">Actions</th>
@@ -366,7 +511,7 @@ $orders = $db->query($query);
                                 <div class="text-sm">
                                     <?php while ($item = $items_result->fetch_assoc()): ?>
                                         <div class="flex items-center mb-2">
-                                            <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?php echo htmlspecialchars($item['p_featured_photo']); ?>" 
+                                            <img src="<?php echo BASE_URL; ?>admin/uploadimgs/<?php echo htmlspecialchars($item['p_featured_photo']); ?>" 
                                                  alt="<?php echo htmlspecialchars($item['p_name']); ?>"
                                                  class="w-15 h-10 object-cover rounded mr-2">
                                             <div>
@@ -379,6 +524,31 @@ $orders = $db->query($query);
                         </td>
                             <td class="pl-8 py-4 whitespace-nowrap">
                                 ₹<?php echo number_format($order['total_amount'], 2); ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <?php if ($hasOrderPaymentColumns): ?>
+                                    <?php
+                                        $ps = $order['payment_status'] ?? 'unpaid';
+                                        $pClass = 'bg-yellow-100 text-yellow-800';
+                                        if ($ps === 'paid') $pClass = 'bg-green-100 text-green-800';
+                                        if ($ps === 'refunded') $pClass = 'bg-gray-200 text-gray-800';
+                                    ?>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo $pClass; ?>">
+                                            <?php echo strtoupper($ps); ?>
+                                        </span>
+                                        <span class="text-xs text-gray-500">
+                                            <?php echo htmlspecialchars($order['payment_method'] ?? ''); ?>
+                                        </span>
+                                        <?php if (!empty($order['payment_txn_id'])): ?>
+                                            <span class="text-xs text-gray-500">
+                                                Txn: <?php echo htmlspecialchars($order['payment_txn_id']); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-xs text-gray-500">Not configured</span>
+                                <?php endif; ?>
                             </td>
                             <td class="px-1 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -416,6 +586,22 @@ $orders = $db->query($query);
                                         Update
                                     </button>
                                 </form>
+                                <button
+                                    <?php if ($hasOrderPaymentColumns): ?>
+                                        onclick="openPaymentModal(
+                                            <?php echo $order['id']; ?>,
+                                            '<?php echo htmlspecialchars($order['payment_status'] ?? 'unpaid', ENT_QUOTES); ?>',
+                                            '<?php echo htmlspecialchars($order['payment_method'] ?? '', ENT_QUOTES); ?>',
+                                            '<?php echo htmlspecialchars($order['payment_txn_id'] ?? '', ENT_QUOTES); ?>',
+                                            '<?php echo htmlspecialchars($order['paid_amount'] ?? '', ENT_QUOTES); ?>',
+                                            '<?php echo !empty($order['paid_at']) ? date('Y-m-d\TH:i', strtotime($order['paid_at'])) : ''; ?>'
+                                        )"
+                                    <?php else: ?>
+                                        onclick="alert('Payment system not configured in DB. Please run the updated SQL to add payment columns to tbl_orders.')"
+                                    <?php endif; ?>
+                                    class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm ml-2">
+                                    <i class="fas fa-credit-card mr-1"></i> Payment
+                                </button>
                                 <button onclick="openEmailModal(<?php echo $order['id']; ?>, '<?php echo htmlspecialchars($order['customer_email']); ?>', '<?php echo $order['status']; ?>', '<?php echo htmlspecialchars($order['customer_name']); ?>', <?php echo $order['total_amount']; ?>)"
                                         class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm ml-2">
                                     <i class="fas fa-envelope mr-1"></i> Email
@@ -425,6 +611,97 @@ $orders = $db->query($query);
                     <?php endwhile; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-[650px] shadow-lg rounded-md bg-white">
+        <div class="absolute top-0 right-0 pt-4 pr-4">
+            <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="mt-3">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-credit-card text-purple-500 text-2xl mr-3"></i>
+                <h3 class="text-xl font-medium leading-6 text-gray-900">Update Payment</h3>
+            </div>
+
+            <form method="post" id="paymentForm" class="space-y-4">
+                <input type="hidden" name="order_id" id="payment_order_id">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-gray-700 text-sm font-bold" for="payment_status">Payment Status</label>
+                        <select id="payment_status" name="payment_status"
+                                class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="unpaid">UNPAID</option>
+                            <option value="paid">PAID</option>
+                            <option value="refunded">REFUNDED</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-gray-700 text-sm font-bold" for="payment_method">Payment Method</label>
+                        <select id="payment_method" name="payment_method"
+                                class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">(select)</option>
+                            <option value="COD">COD</option>
+                            <option value="UPI">UPI</option>
+                            <option value="CARD">CARD</option>
+                            <option value="NETBANKING">NETBANKING</option>
+                            <option value="WALLET">WALLET</option>
+                            <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-gray-700 text-sm font-bold" for="payment_txn_id">Transaction ID</label>
+                        <input type="text" id="payment_txn_id" name="payment_txn_id"
+                               class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="e.g. Razorpay/UPI/Bank reference">
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-gray-700 text-sm font-bold" for="paid_amount">Paid Amount (₹)</label>
+                        <input type="number" step="0.01" min="0" id="paid_amount" name="paid_amount"
+                               class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="e.g. 2999.00">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-gray-700 text-sm font-bold" for="paid_at">Paid At</label>
+                    <input type="datetime-local" id="paid_at" name="paid_at"
+                           class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500">Leave blank if unknown.</p>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-gray-700 text-sm font-bold" for="payment_notes">Payment Notes</label>
+                    <textarea id="payment_notes" name="payment_notes" rows="3"
+                              class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              placeholder="Internal notes (optional)"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t">
+                    <button type="button" onclick="closePaymentModal()"
+                            class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Cancel
+                    </button>
+                    <button type="submit" name="update_payment"
+                            class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:shadow-outline flex items-center">
+                        <i class="fas fa-save mr-2"></i> Save Payment
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -560,6 +837,7 @@ Santosh Vastralay`
 };
 
 let currentOrderData = null;
+let currentPaymentData = null;
 
 function openEmailModal(orderId, customerEmail, orderStatus, customerName, totalAmount) {
     currentOrderData = {
@@ -580,6 +858,29 @@ function openEmailModal(orderId, customerEmail, orderStatus, customerName, total
         insertTemplate();
     } else {
         console.error('Email modal element not found');
+    }
+}
+
+function openPaymentModal(orderId, paymentStatus, paymentMethod, paymentTxnId, paidAmount, paidAt) {
+    currentPaymentData = { orderId };
+    const modal = document.getElementById('paymentModal');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    document.getElementById('payment_order_id').value = orderId;
+    document.getElementById('payment_status').value = (paymentStatus || 'unpaid').toLowerCase();
+    document.getElementById('payment_method').value = paymentMethod || '';
+    document.getElementById('payment_txn_id').value = paymentTxnId || '';
+    document.getElementById('paid_amount').value = paidAmount || '';
+    document.getElementById('paid_at').value = paidAt || '';
+    document.getElementById('payment_notes').value = '';
+}
+
+function closePaymentModal() {
+    const modal = document.getElementById('paymentModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        currentPaymentData = null;
     }
 }
 
@@ -625,6 +926,12 @@ function validateEmailForm() {
 document.getElementById('emailModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeEmailModal();
+    }
+});
+
+document.getElementById('paymentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePaymentModal();
     }
 });
 </script>
