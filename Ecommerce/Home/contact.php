@@ -156,10 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 <h1 class="text-2xl font-bold text-indigo-800">Santosh Vastralay</h1>
             </div>
             <nav class="hidden md:flex space-x-8">
-                <a href="/santoshvas/Ecommerce/index.php" class="text-gray-700 hover:text-indigo-600 transition">Home</a>
-                <a href="/santoshvas/Ecommerce/Home/landingpage.php" class="text-gray-700 hover:text-indigo-600 transition">Shop</a>
-                <a href="/santoshvas/Ecommerce/Home/about.html" class="text-gray-700 hover:text-indigo-600 transition">About Us</a>
-                <a href="/santoshvas/Ecommerce/Home/contact.php" class="text-indigo-600 font-semibold border-b-2 border-indigo-600">Contact</a>
+                <a href="../index.php" class="text-gray-700 hover:text-indigo-600 transition">Home</a>
+                <a href="landingpage.php" class="text-gray-700 hover:text-indigo-600 transition">Shop</a>
+                <a href="about.html" class="text-gray-700 hover:text-indigo-600 transition">About Us</a>
+                <a href="contact.php" class="text-indigo-600 font-semibold border-b-2 border-indigo-600">Contact</a>
              
             
             </nav>
@@ -406,10 +406,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                 <div>
                     <h3 class="text-lg font-semibold mb-4 uppercase">Quick Links</h3>
                     <ul class="space-y-3">
-                        <li><a href="/santoshvas/Ecommerce/index.php" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Home</a></li>
-                        <li><a href="/santoshvas/Ecommerce/Home/landingpage.php" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Shop</a></li>
-                        <li><a href="/santoshvas/Ecommerce/Home/about.html" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> About Us</a></li>
-                        <li><a href="/santoshvas/Ecommerce/Home/contact.php" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Contact</a></li>
+                        <li><a href="../index.php" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Home</a></li>
+                        <li><a href="landingpage.php" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Shop</a></li>
+                        <li><a href="about.html" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> About Us</a></li>
+                        <li><a href="contact.php" class="text-gray-400 hover:text-white transition flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Contact</a></li>
                     </ul>
                 </div>
                 <div>

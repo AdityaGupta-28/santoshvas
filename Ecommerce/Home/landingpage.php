@@ -165,7 +165,7 @@ include_once __DIR__ . "/../user/includes/header.php";
                             <div class="absolute left-0 mt-0 w-48 bg-white rounded-b-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 dropdown-menu z-50">
                                 <div class="py-2">
                                     <?php foreach($category['mcats'] as $mcat): ?>
-                                        <a href="/santoshvas/Ecommerce/Home/landingpage.php?mcat_id=<?= $mcat['mcat_id'] ?>" 
+                                        <a href="<?= BASE_URL ?>Home/landingpage.php?mcat_id=<?= $mcat['mcat_id'] ?>"
                                            class="block px-4 py-2 text-gray-800 hover:bg-blue-100">
                                             <?= htmlspecialchars($mcat['mcat_name']) ?>
                                         </a>
@@ -180,7 +180,7 @@ include_once __DIR__ . "/../user/includes/header.php";
                 </div>
             </div>
             <div class="hidden md:flex items-center">
-                <form action="/santoshvas/Ecommerce/Home/search.php" method="GET" class="flex">
+                <form action="<?= BASE_URL ?>Home/search.php" method="GET" class="flex">
                     <input type="text" name="q" placeholder="Search products..." 
                            class="px-4 py-1 rounded-l text-black focus:outline-none">
                     <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-1 rounded-r">
@@ -244,13 +244,13 @@ include_once __DIR__ . "/../user/includes/header.php";
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
             <?php while($product = mysqli_fetch_assoc($product_result)): ?>
                 <div class="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <a href="/santoshvas/Ecommerce/Home/product.php?p_id=<?= $product['p_id'] ?>">
-                        <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?= htmlspecialchars($product['p_featured_photo']) ?>" 
+                    <a href="<?= BASE_URL ?>Home/product.php?p_id=<?= $product['p_id'] ?>">
+                        <img src="<?= BASE_URL ?>admin/uploadimgs/<?= htmlspecialchars($product['p_featured_photo']) ?>"
                              alt="<?= htmlspecialchars($product['p_name']) ?>" 
                              class="w-full max-h-76 object-fit">
                     </a>
                     <div class="p-4">
-                        <a href="/santoshvas/Ecommerce/Home/product.php?p_id=<?= $product['p_id'] ?>">
+                        <a href="<?= BASE_URL ?>Home/product.php?p_id=<?= $product['p_id'] ?>">
                             <h3 class="text-lg font-semibold text-gray-800 hover:text-blue-600 truncate"><?= htmlspecialchars($product['p_name']) ?></h3>
                         </a>
                         <p class="text-sm text-gray-600 mt-1"><?= htmlspecialchars($product['ecat_name']) ?></p>
@@ -271,7 +271,7 @@ include_once __DIR__ . "/../user/includes/header.php";
             <i class="fas fa-search text-gray-400 text-5xl mb-4"></i>
             <h2 class="text-2xl font-bold text-gray-700 mb-2">No Products Found</h2>
             <p class="text-gray-600 mb-4">We couldn't find any products in this category.</p>
-            <a href="/santoshvas/Ecommerce/Home/landingpage.php" class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            <a href="<?= BASE_URL ?>Home/landingpage.php" class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                 Browse All Categories
             </a>
         </div>
@@ -407,7 +407,7 @@ include_once __DIR__ . "/../user/includes/header.php";
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <p class="text-gray-400">© 2025 Santosh Vastralay. All rights reserved.</p>
                 <div class="mt-4 md:mt-0">
-                    <img src="/santoshvas/Ecommerce/assets/images/payment-methods.png" alt="Payment Methods" class="h-8">
+                    <img src="<?= BASE_URL ?>assets/images/payment-methods.png" alt="Payment Methods" class="h-8">
                 </div>
             </div>
         </div>

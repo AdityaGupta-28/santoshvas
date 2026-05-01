@@ -55,8 +55,24 @@ require_once BASE_PATH . "/Home/cart-functions.php";
 $isLoggedIn = isset($_SESSION['user_id']);
 $userName = $isLoggedIn ? $_SESSION['user_name'] : 'Guest';
 
-// Define base URL
-define('BASE_URL', '/santoshvas/Ecommerce/');
+// Define base URL dynamically so it works after deployment.
+if (!defined('BASE_URL')) {
+    $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : false;
+    $appRoot = realpath(__DIR__);
+    $baseUrl = '/';
+
+    if ($docRoot && $appRoot) {
+        $docRootNorm = str_replace('\\', '/', rtrim($docRoot, '\\/'));
+        $appRootNorm = str_replace('\\', '/', rtrim($appRoot, '\\/'));
+
+        if (strpos($appRootNorm, $docRootNorm) === 0) {
+            $relative = trim(substr($appRootNorm, strlen($docRootNorm)), '/');
+            $baseUrl = '/' . ($relative !== '' ? $relative . '/' : '');
+        }
+    }
+
+    define('BASE_URL', $baseUrl);
+}
 
 // Function to get absolute URL
 function getAbsoluteUrl($path) {

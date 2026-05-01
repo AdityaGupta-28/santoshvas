@@ -139,12 +139,12 @@ if (isset($_POST['buy_now'])) {
     <nav class="text-sm mb-4">
         <ol class="list-none p-0 inline-flex">
             <li class="flex items-center">
-                <a href="/santoshvas/Ecommerce/Home/landingpage.php" class="text-gray-600 hover:text-blue-600">Home</a>
+                <a href="<?= BASE_URL ?>Home/landingpage.php" class="text-gray-600 hover:text-blue-600">Home</a>
             </li>
             <?php if(isset($product['tcat_id']) && isset($product['tcat_name'])): ?>
             <li class="flex items-center">
                 <span class="mx-2 text-gray-400">/</span>
-                <a href="/santoshvas/Ecommerce/Home/landingpage.php?tcat_id=<?= $product['tcat_id'] ?>" class="text-gray-600 hover:text-blue-600">
+                <a href="<?= BASE_URL ?>Home/landingpage.php?tcat_id=<?= $product['tcat_id'] ?>" class="text-gray-600 hover:text-blue-600">
                     <?= htmlspecialchars($product['tcat_name']) ?>
                 </a>
             </li>
@@ -152,7 +152,7 @@ if (isset($_POST['buy_now'])) {
             <?php if(isset($product['mcat_id']) && isset($product['mcat_name'])): ?>
             <li class="flex items-center">
                 <span class="mx-2 text-gray-400">/</span>
-                <a href="/santoshvas/Ecommerce/Home/landingpage.php?mcat_id=<?= $product['mcat_id'] ?>" class="text-gray-600 hover:text-blue-600">
+                <a href="<?= BASE_URL ?>Home/landingpage.php?mcat_id=<?= $product['mcat_id'] ?>" class="text-gray-600 hover:text-blue-600">
                     <?= htmlspecialchars($product['mcat_name']) ?>
                 </a>
             </li>
@@ -160,7 +160,7 @@ if (isset($_POST['buy_now'])) {
             <?php if(isset($product['ecat_id']) && isset($product['ecat_name'])): ?>
             <li class="flex items-center">
                 <span class="mx-2 text-gray-400">/</span>
-                <a href="/santoshvas/Ecommerce/Home/landingpage.php?ecat_id=<?= $product['ecat_id'] ?>" class="text-gray-600 hover:text-blue-600">
+                <a href="<?= BASE_URL ?>Home/landingpage.php?ecat_id=<?= $product['ecat_id'] ?>" class="text-gray-600 hover:text-blue-600">
                     <?= htmlspecialchars($product['ecat_name']) ?>
                 </a>
             </li>
@@ -195,8 +195,8 @@ if (isset($_POST['buy_now'])) {
                         <?php foreach($product_images as $index => $image): ?>
                         <div class="main-image absolute inset-0 transition-opacity duration-500 ease-in-out <?= $index === 0 ? 'opacity-100' : 'opacity-0' ?> flex items-center justify-center cursor-pointer"
                              data-index="<?= $index ?>"
-                             onclick="openModal('/santoshvas/Ecommerce/admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>')">
-                            <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>" 
+                             onclick="openModal('<?= BASE_URL ?>admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>')">
+                            <img src="<?= BASE_URL ?>admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>"
                                  alt="<?= htmlspecialchars($product['p_name']) ?>" 
                                  class="max-w-full max-h-full object-contain hover:scale-105 transition-transform duration-300">
                         </div>
@@ -219,7 +219,7 @@ if (isset($_POST['buy_now'])) {
                         <?php foreach($product_images as $index => $image): ?>
                         <div class="thumbnail cursor-pointer flex-shrink-0 border-2 <?= $index === 0 ? 'border-blue-500' : 'border-transparent' ?> hover:border-blue-300"
                              onclick="selectImage(<?= $index ?>)">
-                            <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>" 
+                            <img src="<?= BASE_URL ?>admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>"
                                  alt="Thumbnail" 
                                  class="h-20 w-20 object-cover">
                         </div>
@@ -234,7 +234,7 @@ if (isset($_POST['buy_now'])) {
                 <div class="mb-4">
                     <h1 class="text-3xl font-bold text-gray-800 mb-2"><?= htmlspecialchars($product['p_name']) ?></h1>
                     <div class="text-sm text-gray-600 mb-2">
-                        Category: <a href="/santoshvas/Ecommerce/Home/landingpage.php?ecat_id=<?= $product['ecat_id'] ?>" class="text-blue-600 hover:underline">
+                        Category: <a href="<?= BASE_URL ?>Home/landingpage.php?ecat_id=<?= $product['ecat_id'] ?>" class="text-blue-600 hover:underline">
                             <?= htmlspecialchars($product['ecat_name']) ?>
                         </a>
                     </div>
@@ -380,13 +380,13 @@ if (isset($_POST['buy_now'])) {
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <?php while($related = mysqli_fetch_assoc($related_result)): ?>
             <div class="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1">
-                <a href="/santoshvas/Ecommerce/Home/product.php?p_id=<?= $related['p_id'] ?>">
-                    <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?= htmlspecialchars($related['p_featured_photo']) ?>" 
+                <a href="<?= BASE_URL ?>Home/product.php?p_id=<?= $related['p_id'] ?>">
+                    <img src="<?= BASE_URL ?>admin/uploadimgs/<?= htmlspecialchars($related['p_featured_photo']) ?>"
                          alt="<?= htmlspecialchars($related['p_name']) ?>" 
                          class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4">
-                    <a href="/santoshvas/Ecommerce/Home/product.php?p_id=<?= $related['p_id'] ?>">
+                    <a href="<?= BASE_URL ?>Home/product.php?p_id=<?= $related['p_id'] ?>">
                         <h3 class="text-lg font-semibold text-gray-800 hover:text-blue-600 truncate"><?= htmlspecialchars($related['p_name']) ?></h3>
                     </a>
                     <p class="text-sm text-gray-600 mt-1"><?= htmlspecialchars($related['ecat_name']) ?></p>
@@ -413,7 +413,7 @@ let currentIndex = 0;
 const totalImages = <?= count($product_images) ?>;
 const productImages = [
     <?php foreach($product_images as $image): ?>
-    "/santoshvas/Ecommerce/admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>",
+    "<?= BASE_URL ?>admin/uploadimgs/<?= htmlspecialchars($image['photo']) ?>",
     <?php endforeach; ?>
 ];
 

@@ -70,7 +70,7 @@ $cart_total = getCartTotal();
                                 <td class="py-4 px-4"><?php echo $key+1; ?></td>
                                 <td class="py-4 px-4">
                                     <div class="flex items-center">
-                                        <img src="/santoshvas/Ecommerce/admin/uploadimgs/<?php echo htmlspecialchars($item['photo']); ?>" 
+                                        <img src="<?php echo BASE_URL; ?>admin/uploadimgs/<?php echo htmlspecialchars($item['photo']); ?>" 
                                              alt="<?php echo htmlspecialchars($item['name']); ?>" 
                                              class="w-16 h-16 object-cover rounded mr-4">
                                         <?php echo htmlspecialchars($item['name']); ?>

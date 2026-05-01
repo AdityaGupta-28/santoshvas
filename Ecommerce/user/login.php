@@ -40,8 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_email'] = $user['email'];
                 
-                // Redirect to home page
-                header('Location: /santoshvas/Ecommerce/Home/landingpage.php');
+                header('Location: ' . BASE_URL . 'Home/landingpage.php');
                 exit();
             } else {
                 $errors['general'] = 'Invalid email or password';

@@ -1,9 +1,7 @@
 <?php
 require_once __DIR__ . "/../../db.php";
 
-// Only proceed with HTML output if no headers have been sent
 if (!headers_sent()) {
-    // Set default title if not set
     if (!isset($title)) {
         $title = "Santosh Vastralay";
     }
@@ -15,7 +13,6 @@ if (!headers_sent()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($title); ?></title>
     
-    <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -96,7 +93,6 @@ if (!headers_sent()) {
     </style>
 </head>
 <body class="bg-gray-100 font-sans">
-    <!-- Mobile Menu -->
     <div id="mobileMenu" class="mobile-menu fixed inset-y-0 left-0 bg-gray-900 text-white w-64 z-50 shadow-lg">
         <div class="p-6 border-b border-gray-700">
             <div class="flex justify-between items-center">
@@ -107,81 +103,72 @@ if (!headers_sent()) {
             </div>
         </div>
         <nav class="mt-6">
-            <a href="/santoshvas/Ecommerce/index.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+            <a href="<?php echo BASE_URL; ?>index.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                 <i class="fas fa-home mr-2"></i> Home
             </a>
-            <a href="/santoshvas/Ecommerce/Home/landingpage.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+            <a href="<?php echo BASE_URL; ?>Home/landingpage.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                 <i class="fas fa-store mr-2"></i> Shop
             </a>
-            <a href="/santoshvas/Ecommerce/Home/about.html" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+            <a href="<?php echo BASE_URL; ?>Home/about.html" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                 <i class="fas fa-info-circle mr-2"></i> About us
             </a>
-            <a href="/santoshvas/Ecommerce/Home/contact.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+            <a href="<?php echo BASE_URL; ?>Home/contact.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                 <i class="fas fa-envelope mr-2"></i> Contact
             </a>
-            <a href="/santoshvas/Ecommerce/Home/cart.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+            <a href="<?php echo BASE_URL; ?>Home/cart.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                 <i class="fas fa-shopping-cart mr-2"></i> Cart
                 <span class="cart-badge"><?php echo getCartItemCount(); ?></span>
             </a>
             <?php if($isLoggedIn): ?>
-                <a href="/santoshvas/Ecommerce/user/userprofile.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+                <a href="<?php echo BASE_URL; ?>user/userprofile.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                     <i class="fas fa-user mr-2"></i> My Profile
                 </a>
-                <a href="/santoshvas/Ecommerce/user/orders.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+                <a href="<?php echo BASE_URL; ?>user/orders.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                     <i class="fas fa-box mr-2"></i> My Orders
                 </a>
-                <a href="/santoshvas/Ecommerce/actions/logoutaction.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+                <a href="<?php echo BASE_URL; ?>actions/logoutaction.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                     <i class="fas fa-sign-out-alt mr-2"></i> Logout
                 </a>
             <?php else: ?>
-                <a href="/santoshvas/Ecommerce/user/login.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+                <a href="<?php echo BASE_URL; ?>user/login.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                     <i class="fas fa-sign-in-alt mr-2"></i> Login
                 </a>
-                <a href="/santoshvas/Ecommerce/user/reg.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+                <a href="<?php echo BASE_URL; ?>user/reg.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                     <i class="fas fa-user-plus mr-2"></i> Register
                 </a>
             <?php endif; ?>
-            <a href="/santoshvas/Ecommerce/user/adminlogin.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
+            <a href="<?php echo BASE_URL; ?>user/adminlogin.php" class="block py-3 px-6 hover:bg-gray-800 hover:text-indigo-300 transition-colors duration-200">
                 <i class="fas fa-user-shield mr-2"></i> Admin
             </a>
         </nav>
     </div>
 
-    <!-- Header Section -->
     <header class="fancy-header text-white p-4 flex justify-between items-center">
-        <!-- Logo and Brand Name -->
         <div class="flex items-center">
-            <img src="/santoshvas/Ecommerce/Home/images/logo.png" alt="Santosh Vastralay Logo" class="h-12 rounded-full shadow-md">
+            <img src="<?php echo BASE_URL; ?>Home/images/logo.png" alt="Santosh Vastralay Logo" class="h-12 rounded-full shadow-md">
         </div>
 
-        <!-- Mobile Menu Button -->
         <button id="mobileMenuButton" class="sm:hidden text-white focus:outline-none p-2 hover:bg-gray-700 rounded">
             <i class="fas fa-bars text-xl"></i>
         </button>
     
-        <!-- Navigation Menu for Larger Screens -->
         <nav class="hidden sm:flex items-center gap-8 text-lg">
-            <a href="/santoshvas/Ecommerce/index.php" class="nav-item font-semibold">
-                <!-- <i class="fas fa-home mr-1"></i> -->
+            <a href="<?php echo BASE_URL; ?>index.php" class="nav-item font-semibold">
                  Home
             </a>
-            <a href="/santoshvas/Ecommerce/Home/landingpage.php" class="nav-item font-semibold">
-                <!-- <i class="fas fa-store mr-1"></i> -->
+            <a href="<?php echo BASE_URL; ?>Home/landingpage.php" class="nav-item font-semibold">
                  Shop
             </a>
-            <a href="/santoshvas/Ecommerce/Home/about.html" class="nav-item font-semibold">
-                <!-- <i class="fas fa-info-circle mr-1"></i> -->
+            <a href="<?php echo BASE_URL; ?>Home/about.html" class="nav-item font-semibold">
                  About us
             </a>
-            <a href="/santoshvas/Ecommerce/Home/contact.php" class="nav-item font-semibold">
-                <!-- <i class="fas fa-envelope mr-1"></i> -->
+            <a href="<?php echo BASE_URL; ?>Home/contact.php" class="nav-item font-semibold">
                  Contact
             </a>
         </nav>
     
-        <!-- User Dropdown and Cart Icon -->
         <div class="hidden sm:flex items-center space-x-8">
-            <a href="/santoshvas/Ecommerce/Home/cart.php" class="text-white nav-item relative">
+            <a href="<?php echo BASE_URL; ?>Home/cart.php" class="text-white nav-item relative">
                 <i class="fas fa-shopping-cart text-xl"></i>
                 <span class="cart-badge"><?php echo getCartItemCount(); ?></span>
             </a>
@@ -193,27 +180,27 @@ if (!headers_sent()) {
                 </button>
                 <div id="userMenuDropdown" class="dropdown-menu">
                     <?php if($isLoggedIn): ?>
-                        <a href="/santoshvas/Ecommerce/user/userprofile.php" class="user-menu-item">
+                        <a href="<?php echo BASE_URL; ?>user/userprofile.php" class="user-menu-item">
                             <i class="fas fa-user-circle"></i> My Profile
                         </a>
-                        <a href="/santoshvas/Ecommerce/user/orders.php" class="user-menu-item">
+                        <a href="<?php echo BASE_URL; ?>user/orders.php" class="user-menu-item">
                             <i class="fas fa-box"></i> My Orders
                         </a>
-                        <a href="/santoshvas/Ecommerce/actions/logoutaction.php" class="user-menu-item">
+                        <a href="<?php echo BASE_URL; ?>actions/logoutaction.php" class="user-menu-item">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
                     <?php else: ?>
-                        <a href="/santoshvas/Ecommerce/user/login.php" class="user-menu-item">
+                        <a href="<?php echo BASE_URL; ?>user/login.php" class="user-menu-item">
                             <i class="fas fa-sign-in-alt"></i> Login
                         </a>
-                        <a href="/santoshvas/Ecommerce/user/reg.php" class="user-menu-item">
+                        <a href="<?php echo BASE_URL; ?>user/reg.php" class="user-menu-item">
                             <i class="fas fa-user-plus"></i> Register
                         </a>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <a href="/santoshvas/Ecommerce/user/adminlogin.php" class="nav-item text-white">
+            <a href="<?php echo BASE_URL; ?>user/adminlogin.php" class="nav-item text-white">
                 <i class="fas fa-user-shield text-xl"></i>
             </a>
         </div>

@@ -1,10 +1,12 @@
 <?php
-// Start output buffering and session
 ob_start();
 
-// Use absolute path for includes
-require_once 'C:/xampp/htdocs/santoshvas/Ecommerce/actions/function.class.php';
-require_once 'C:/xampp/htdocs/santoshvas/Ecommerce/db.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../../actions/function.class.php';
+require_once __DIR__ . '/../../db.php';
 
 // Initialize database and function classes if needed
 if (!isset($db)) {
@@ -14,7 +16,6 @@ if (!isset($fn)) {
     $fn = new Functions();
 }
 
-// Error handling
 $error_message = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 $success_message = isset($_SESSION['success']) ? $_SESSION['success'] : '';
 
@@ -22,15 +23,12 @@ $success_message = isset($_SESSION['success']) ? $_SESSION['success'] : '';
 unset($_SESSION['error']);
 unset($_SESSION['success']);
 
-// Authentication check
 if (!isset($_SESSION['user'])) {
-    header('Location: /santoshvas/Ecommerce/user/adminlogin.php');
+    header('Location: ' . BASE_URL . 'user/adminlogin.php');
     exit;
 }
 
-// Logout functionality
 if (isset($_GET['logout']) && $_GET['logout'] === 'true') {
-    // Use a more secure session destruction method
     $_SESSION = array();
     
     if (ini_get("session.use_cookies")) {
@@ -42,16 +40,9 @@ if (isset($_GET['logout']) && $_GET['logout'] === 'true') {
     }
     
     session_destroy();
-    header('Location: /santoshvas/Ecommerce/user/adminlogin.php');
+    header('Location: ' . BASE_URL . 'user/adminlogin.php');
     exit;
 }
-
-// Only start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Get admin data if logged in
 $admin_name = '';
 if (isset($_SESSION['admin_id'])) {
     $stmt = $db->prepare("SELECT full_name FROM admin WHERE id = ?");
@@ -86,7 +77,7 @@ if (isset($_SESSION['admin_id'])) {
         </a>
         <ul class="side-menu top mt-8">
             <li class="bg-blue-50 border-r-4 border-blue-500">
-                <a href="/santoshvas/Ecommerce/admin/index.php" class="flex items-center h-12 px-4 text-blue-500">
+                <a href="<?php echo BASE_URL; ?>admin/index.php" class="flex items-center h-12 px-4 text-blue-500">
                     <i class='bx bxs-dashboard text-xl'></i>
                     <span class="text ml-3 sidebar-text">Dashboard</span>
                 </a>
@@ -102,12 +93,12 @@ if (isset($_SESSION['admin_id'])) {
                 </a>
                 <ul class="submenu hidden  bg-gray-50 shadow-inner">
                     <li>
-                        <a href="/santoshvas/Ecommerce/admin/dashboardpages/shopsettings/size.php" class="flex items-center h-10 pl-5 text-gray-600     hover:text-blue-600 hover:bg-gray-100">
+                        <a href="<?php echo BASE_URL; ?>admin/dashboardpages/shopsettings/size.php" class="flex items-center h-10 pl-5 text-gray-600     hover:text-blue-600 hover:bg-gray-100">
                             <span><i class='bx bxs-circle  hover:text-blue-700  bx-rotate-90 mr-5' ></i>Size</span>
                         </a>
                     </li>
                     <li>
-                        <a href="/santoshvas/Ecommerce/admin/dashboardpages/shopsettings/color.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
+                        <a href="<?php echo BASE_URL; ?>admin/dashboardpages/shopsettings/color.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
                             <span><i class='bx bxs-circle  hover:text-blue-700  bx-rotate-90 mr-5' ></i>Color</span>
                         </a>
                     </li>
@@ -117,31 +108,31 @@ if (isset($_SESSION['admin_id'])) {
                         </a>
                     </li> -->
                     <li>
-                        <a href="/santoshvas/Ecommerce/admin/dashboardpages/shopsettings/top-category.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
+                        <a href="<?php echo BASE_URL; ?>admin/dashboardpages/shopsettings/top-category.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
                             <span><i class='bx bxs-circle  hover:text-blue-700  bx-rotate-90 mr-5' ></i>Top Level Catergory</span>
                         </a>
                     </li>
 
                     <li>
-                        <a href="/santoshvas/Ecommerce/admin/dashboardpages/shopsettings/mid-category.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
+                        <a href="<?php echo BASE_URL; ?>admin/dashboardpages/shopsettings/mid-category.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
                             <span><i class='bx bxs-circle  hover:text-blue-700  bx-rotate-90 mr-5' ></i>Mid Level Category</span>
                         </a>
                     </li>
                     <li >
-                        <a href="/santoshvas/Ecommerce/admin/dashboardpages/shopsettings/end-category.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
+                        <a href="<?php echo BASE_URL; ?>admin/dashboardpages/shopsettings/end-category.php" class="flex items-center h-10 pl-5 text-gray-600   hover:text-blue-600 hover:bg-gray-100">
                             <span><i class='bx bxs-circle  hover:text-blue-700  bx-rotate-90 mr-5' ></i>End Level Catergory</span>
                         </a>
                     </li>
                 </ul>
             </li>
             <li>
-                <a href="/santoshvas/Ecommerce/admin/dashboardpages/productmanagement/products.php" class="flex items-center h-12 px-4 text-gray-700 hover:text-blue-500">
+                <a href="<?php echo BASE_URL; ?>admin/dashboardpages/productmanagement/products.php" class="flex items-center h-12 px-4 text-gray-700 hover:text-blue-500">
                     <i class='bx bxs-doughnut-chart text-xl'></i>
                     <span class="text ml-3 sidebar-text ">Product Management</span>
                 </a>
             </li>
             <li>
-                <a href="/santoshvas/Ecommerce/admin/dashboardpages/ordermanagement.php" class="flex items-center h-12 px-4 text-gray-700 hover:text-blue-500">
+                <a href="<?php echo BASE_URL; ?>admin/dashboardpages/ordermanagement.php" class="flex items-center h-12 px-4 text-gray-700 hover:text-blue-500">
                     <i class='bx bxs-doughnut-chart text-xl'></i>
                     <span class="text ml-3 sidebar-text ">Order Management</span>
                 </a>
@@ -218,7 +209,7 @@ if (isset($_SESSION['admin_id'])) {
             <div id="profile-dropdown" class="profile-dropdown absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
                 <ul class="py-1">
                     <li>
-                        <a href="/santoshvas/Ecommerce/admin/dashboardpages/profile-edit.php" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 flex items-center">
+                        <a href="<?php echo BASE_URL; ?>admin/dashboardpages/profile-edit.php" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 flex items-center">
                             <i class='bx bxs-user mr-2'></i> Edit Profile
                         </a>
                     </li>
